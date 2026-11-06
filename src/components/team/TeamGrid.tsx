@@ -3,17 +3,53 @@ import type { TeamMember } from '@/types/pokemon';
 
 interface TeamGridProps {
   team: readonly TeamMember[];
+  onEditSlot: (slot: number) => void;
   onRemoveMember?: (slot: number) => void;
+  onClearTeam?: () => void;
+  onResetSampleTeam?: () => void;
 }
 
 const SLOTS = [1, 2, 3, 4, 5, 6] as const;
 
-export function TeamGrid({ team, onRemoveMember }: TeamGridProps) {
+export function TeamGrid({
+  team,
+  onEditSlot,
+  onRemoveMember,
+  onClearTeam,
+  onResetSampleTeam,
+}: TeamGridProps) {
   return (
     <section aria-label="Equipo Pokémon">
-      <div className="mb-3 flex items-center justify-between">
-        <h2 className="text-lg font-bold text-white">Tu Equipo ({team.length}/6)</h2>
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+        <div>
+          <h2 className="text-lg font-bold text-white">Tu Equipo ({team.length}/6)</h2>
+          <p className="text-xs text-slate-400">
+            Haz clic en cualquier slot para buscar un Pokémon, ajustar sus tipos/habilidad y elegir sus 4 ataques.
+          </p>
+        </div>
+
+        <div className="flex items-center gap-2">
+          {onResetSampleTeam && (
+            <button
+              type="button"
+              onClick={onResetSampleTeam}
+              className="rounded-lg border border-slate-700 bg-slate-900 px-3 py-1.5 text-xs font-medium text-slate-300 hover:bg-slate-800 hover:text-white"
+            >
+              Cargar equipo de ejemplo
+            </button>
+          )}
+          {onClearTeam && team.length > 0 && (
+            <button
+              type="button"
+              onClick={onClearTeam}
+              className="rounded-lg border border-rose-900/60 bg-rose-950/30 px-3 py-1.5 text-xs font-medium text-rose-300 hover:bg-rose-900/40"
+            >
+              Vaciar equipo
+            </button>
+          )}
+        </div>
       </div>
+
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {SLOTS.map((slot) => {
           const member = team.find((m) => m.slot === slot);
@@ -22,6 +58,7 @@ export function TeamGrid({ team, onRemoveMember }: TeamGridProps) {
               key={slot}
               slot={slot}
               member={member}
+              onEdit={onEditSlot}
               onRemove={onRemoveMember}
             />
           );

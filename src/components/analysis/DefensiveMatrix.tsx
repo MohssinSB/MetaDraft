@@ -31,52 +31,58 @@ export function DefensiveMatrix({ team, summaries }: DefensiveMatrixProps) {
         Multiplicador de daño que recibe cada Pokémon de tu equipo frente a los 18 tipos de ataque.
       </p>
 
-      <div className="mt-4 overflow-x-auto">
-        <table className="w-full border-collapse text-left text-xs">
-          <thead>
-            <tr className="border-b border-slate-800 text-slate-400">
-              <th className="py-2 pr-3">Ataque Entrante</th>
-              {team.map((m) => (
-                <th key={m.slot} className="px-2 py-2 text-center font-semibold text-slate-200">
-                  {m.speciesName}
-                </th>
-              ))}
-              <th className="px-2 py-2 text-center text-rose-400">Débiles</th>
-              <th className="px-2 py-2 text-center text-emerald-400">Resisten</th>
-              <th className="px-2 py-2 text-center text-slate-300">Inmunes</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-800/60">
-            {summaries.map((row) => (
-              <tr key={row.attackType} className="hover:bg-slate-800/30">
-                <td className="py-1.5 pr-3">
-                  <TypeBadge type={row.attackType} size="sm" />
-                </td>
-                {team.map((m) => {
-                  const mult = row.memberMultipliers[m.slot] ?? 1;
-                  const badge = formatMultiplier(mult);
-                  return (
-                    <td key={m.slot} className="px-2 py-1.5 text-center">
-                      <span className={`inline-block w-8 rounded py-0.5 text-center ${badge.className}`}>
-                        {badge.label}
-                      </span>
-                    </td>
-                  );
-                })}
-                <td className="px-2 py-1.5 text-center font-semibold text-rose-400">
-                  {row.weakCount}
-                </td>
-                <td className="px-2 py-1.5 text-center font-semibold text-emerald-400">
-                  {row.resistCount}
-                </td>
-                <td className="px-2 py-1.5 text-center font-semibold text-slate-300">
-                  {row.immuneCount}
-                </td>
+      {team.length === 0 ? (
+        <p className="py-8 text-center text-xs text-slate-500">
+          Añade al menos un Pokémon a tu equipo para visualizar la matriz defensiva.
+        </p>
+      ) : (
+        <div className="mt-4 overflow-x-auto">
+          <table className="w-full border-collapse text-left text-xs">
+            <thead>
+              <tr className="border-b border-slate-800 text-slate-400">
+                <th className="py-2 pr-3">Ataque Entrante</th>
+                {team.map((m) => (
+                  <th key={m.slot} className="px-2 py-2 text-center font-semibold text-slate-200">
+                    {m.speciesName}
+                  </th>
+                ))}
+                <th className="px-2 py-2 text-center text-rose-400">Débiles</th>
+                <th className="px-2 py-2 text-center text-emerald-400">Resisten</th>
+                <th className="px-2 py-2 text-center text-slate-300">Inmunes</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody className="divide-y divide-slate-800/60">
+              {summaries.map((row) => (
+                <tr key={row.attackType} className="hover:bg-slate-800/30">
+                  <td className="py-1.5 pr-3">
+                    <TypeBadge type={row.attackType} size="sm" />
+                  </td>
+                  {team.map((m) => {
+                    const mult = row.memberMultipliers[m.slot] ?? 1;
+                    const badge = formatMultiplier(mult);
+                    return (
+                      <td key={m.slot} className="px-2 py-1.5 text-center">
+                        <span className={`inline-block w-8 rounded py-0.5 text-center ${badge.className}`}>
+                          {badge.label}
+                        </span>
+                      </td>
+                    );
+                  })}
+                  <td className="px-2 py-1.5 text-center font-semibold text-rose-400">
+                    {row.weakCount}
+                  </td>
+                  <td className="px-2 py-1.5 text-center font-semibold text-emerald-400">
+                    {row.resistCount}
+                  </td>
+                  <td className="px-2 py-1.5 text-center font-semibold text-slate-300">
+                    {row.immuneCount}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </section>
   );
 }
