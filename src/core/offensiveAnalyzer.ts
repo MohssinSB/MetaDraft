@@ -1,9 +1,11 @@
-import { ALL_TYPES, TYPE_CHART } from '@/data/typeChart';
+import { ALL_TYPES } from '@/data/typeChart';
+import { getMoveEffectiveness, hasMoveStab } from '@/core/effectiveness';
 import type { TeamMember, TypeOffensiveSummary } from '@/types/pokemon';
 
 /**
  * Analiza la cobertura ofensiva del equipo comprobando a qué tipos elementales
- * se puede golpear con eficacia súper efectiva (x2) usando movimientos de daño.
+ * se puede golpear con eficacia súper efectiva (x2) usando movimientos de daño
+ * (incluyendo movimientos especiales como Liofilización y STAB de Teratipo).
  */
 export function analyzeTeamOffense(team: readonly TeamMember[]): TypeOffensiveSummary[] {
   return ALL_TYPES.map((targetType) => {
@@ -12,14 +14,12 @@ export function analyzeTeamOffense(team: readonly TeamMember[]): TypeOffensiveSu
 
     for (const member of team) {
       for (const move of member.moves) {
-        // Regla importante: ignorar movimientos de estado ('status') como Protección o Danza Espada
         if (move.category === 'status') continue;
 
-        const effectiveness = TYPE_CHART[move.type][targetType];
+        const effectiveness = getMoveEffectiveness(move, [targetType]);
         if (effectiveness > 1) {
           superEffectiveMoveCount++;
-          const isStab = member.types.includes(move.type);
-          if (isStab) {
+          if (hasMoveStab(member, move.type)) {
             hasStabSuperEffective = true;
           }
         }

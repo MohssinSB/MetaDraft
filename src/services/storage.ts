@@ -1,19 +1,22 @@
 import type { TeamMember } from '@/types/pokemon';
 
 const TEAM_STORAGE_KEY = 'metadraft_saved_team_v1';
+const RIVAL_STORAGE_KEY = 'metadraft_rival_team_v1';
 const CACHE_PREFIX = 'metadraft_cache_v1_';
 
-export function saveTeamToStorage(team: readonly TeamMember[]): void {
+export function saveTeamToStorage(team: readonly TeamMember[], isRival = false): void {
   try {
-    localStorage.setItem(TEAM_STORAGE_KEY, JSON.stringify(team));
+    const key = isRival ? RIVAL_STORAGE_KEY : TEAM_STORAGE_KEY;
+    localStorage.setItem(key, JSON.stringify(team));
   } catch (error) {
     console.error('Error al guardar el equipo en localStorage:', error);
   }
 }
 
-export function loadTeamFromStorage(): TeamMember[] | null {
+export function loadTeamFromStorage(isRival = false): TeamMember[] | null {
   try {
-    const raw = localStorage.getItem(TEAM_STORAGE_KEY);
+    const key = isRival ? RIVAL_STORAGE_KEY : TEAM_STORAGE_KEY;
+    const raw = localStorage.getItem(key);
     if (!raw) return null;
     return JSON.parse(raw) as TeamMember[];
   } catch (error) {

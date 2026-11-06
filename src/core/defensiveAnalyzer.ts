@@ -1,10 +1,10 @@
 import { ALL_TYPES } from '@/data/typeChart';
-import { getAttackEffectiveness } from '@/core/effectiveness';
+import { getAttackEffectiveness, getEffectiveDefensiveTypes } from '@/core/effectiveness';
 import type { TeamMember, TypeDefensiveSummary } from '@/types/pokemon';
 
 /**
  * Analiza las debilidades, resistencias e inmunidades de todo el equipo (hasta 6 Pokémon)
- * frente a cada uno de los 18 tipos elementales.
+ * frente a cada uno de los 18 tipos elementales (respetando Teracristalización si está activa).
  */
 export function analyzeTeamDefense(team: readonly TeamMember[]): TypeDefensiveSummary[] {
   return ALL_TYPES.map((attackType) => {
@@ -15,7 +15,8 @@ export function analyzeTeamDefense(team: readonly TeamMember[]): TypeDefensiveSu
     const memberMultipliers: TypeDefensiveSummary['memberMultipliers'] = {};
 
     for (const member of team) {
-      const mult = getAttackEffectiveness(attackType, member.types, member.ability);
+      const effectiveTypes = getEffectiveDefensiveTypes(member);
+      const mult = getAttackEffectiveness(attackType, effectiveTypes, member.ability);
       memberMultipliers[member.slot] = mult;
 
       if (mult === 0) {
@@ -41,8 +42,7 @@ export function analyzeTeamDefense(team: readonly TeamMember[]): TypeDefensiveSu
 }
 
 /**
- * Detecta tipos peligrosos para el equipo (por ejemplo: 3 o más debilidades sin ninguna inmunidad o resistencia).
- * TODO (Fase 3): Personalizar los umbrales de alerta según el formato de tu torneo.
+ * Detecta tipos peligrosos para el equipo (por ejemplo: 3 o más debilidades, o 2+ debilidades sin resistencias).
  */
 export function getDefensiveWarnings(summaries: readonly TypeDefensiveSummary[]): TypeDefensiveSummary[] {
   return summaries.filter(

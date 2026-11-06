@@ -1,4 +1,7 @@
+import { getEffectiveDefensiveTypes, hasMoveStab } from '@/core/effectiveness';
 import { ABILITY_MODIFIERS } from '@/data/abilityModifiers';
+import { SPECIAL_MOVES } from '@/data/specialMoves';
+import { TYPE_METADATA } from '@/data/typeChart';
 import { TypeBadge } from '@/components/team/TypeBadge';
 import type { TeamMember } from '@/types/pokemon';
 
@@ -6,10 +9,17 @@ interface PokemonSlotProps {
   slot: number;
   member?: TeamMember;
   onEdit: (slot: number) => void;
+  onToggleTera?: (slot: number) => void;
   onRemove?: (slot: number) => void;
 }
 
-export function PokemonSlot({ slot, member, onEdit, onRemove }: PokemonSlotProps) {
+export function PokemonSlot({
+  slot,
+  member,
+  onEdit,
+  onToggleTera,
+  onRemove,
+}: PokemonSlotProps) {
   if (!member) {
     return (
       <button
@@ -32,8 +42,16 @@ export function PokemonSlot({ slot, member, onEdit, onRemove }: PokemonSlotProps
     ? ABILITY_MODIFIERS[member.ability]?.nameEs ?? member.ability
     : 'Estándar';
 
+  const effectiveTypes = getEffectiveDefensiveTypes(member);
+
   return (
-    <div className="flex flex-col justify-between rounded-xl border border-slate-800 bg-slate-900 p-4 shadow-md transition hover:border-slate-700">
+    <div
+      className={`flex flex-col justify-between rounded-xl border p-4 shadow-md transition ${
+        member.isTeraActive
+          ? 'border-fuchsia-500/70 bg-slate-900 ring-1 ring-fuchsia-500/30'
+          : 'border-slate-800 bg-slate-900 hover:border-slate-700'
+      }`}
+    >
       <div>
         <div className="flex items-start justify-between gap-2">
           <div className="flex items-center gap-3">
@@ -51,10 +69,15 @@ export function PokemonSlot({ slot, member, onEdit, onRemove }: PokemonSlotProps
             <div>
               <span className="text-[11px] font-medium text-slate-400">Slot #{slot}</span>
               <h3 className="text-base font-bold text-white">{member.speciesName}</h3>
-              <div className="mt-1 flex flex-wrap gap-1">
-                {member.types.map((t) => (
+              <div className="mt-1 flex flex-wrap items-center gap-1">
+                {effectiveTypes.map((t) => (
                   <TypeBadge key={t} type={t} size="sm" />
                 ))}
+                {member.isTeraActive && (
+                  <span className="rounded bg-fuchsia-950 px-1.5 py-0.5 text-[10px] font-bold text-fuchsia-300">
+                    TERA
+                  </span>
+                )}
               </div>
             </div>
           </div>
@@ -81,12 +104,29 @@ export function PokemonSlot({ slot, member, onEdit, onRemove }: PokemonSlotProps
           </div>
         </div>
 
-        <p className="mt-2.5 text-xs text-slate-400">
-          Habilidad:{' '}
-          <span className={member.ability ? 'font-semibold text-amber-300' : 'text-slate-300'}>
-            {abilityLabel}
-          </span>
-        </p>
+        <div className="mt-2.5 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-400">
+          <p>
+            Habilidad:{' '}
+            <span className={member.ability ? 'font-semibold text-amber-300' : 'text-slate-300'}>
+              {abilityLabel}
+            </span>
+          </p>
+
+          {member.teraType && onToggleTera && (
+            <button
+              type="button"
+              onClick={() => onToggleTera(slot)}
+              className={`rounded-md border px-2 py-0.5 text-[11px] font-semibold transition ${
+                member.isTeraActive
+                  ? 'border-fuchsia-500 bg-fuchsia-600 text-white'
+                  : 'border-slate-700 bg-slate-800 text-slate-300 hover:border-fuchsia-500/50'
+              }`}
+              title="Simular Teracristalización en las tablas"
+            >
+              💎 Tera {TYPE_METADATA[member.teraType].labelEs}
+            </button>
+          )}
+        </div>
       </div>
 
       <div className="mt-4 border-t border-slate-800 pt-3">
@@ -111,13 +151,21 @@ export function PokemonSlot({ slot, member, onEdit, onRemove }: PokemonSlotProps
           <ul className="space-y-1">
             {member.moves.map((move) => {
               const hasStab =
-                move.category !== 'status' && member.types.includes(move.type);
+                move.category !== 'status' && hasMoveStab(member, move.type);
+              const isSpecialRule = move.id in SPECIAL_MOVES;
               return (
                 <li
                   key={move.id}
                   className="flex items-center justify-between rounded bg-slate-950/60 px-2 py-1 text-xs"
                 >
-                  <span className="truncate font-medium text-slate-200">{move.name}</span>
+                  <span className="truncate font-medium text-slate-200">
+                    {move.name}
+                    {isSpecialRule && (
+                      <span className="ml-1 text-amber-400" title={SPECIAL_MOVES[move.id].description}>
+                        ★
+                      </span>
+                    )}
+                  </span>
                   <div className="flex items-center gap-1">
                     {move.category === 'status' ? (
                       <span className="rounded bg-slate-800 px-1.5 py-0.5 text-[10px] text-slate-400">

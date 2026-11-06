@@ -12,6 +12,8 @@ export const INITIAL_SAMPLE_TEAM: TeamMember[] = [
     slot: 1,
     speciesName: 'Garchomp',
     types: ['dragon', 'ground'],
+    teraType: 'steel',
+    isTeraActive: false,
     spriteUrl: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/445.png',
     moves: [
       { id: 'earthquake', name: 'Terremoto', type: 'ground', category: 'physical', power: 100 },
@@ -24,6 +26,8 @@ export const INITIAL_SAMPLE_TEAM: TeamMember[] = [
     speciesName: 'Rotom Wash',
     types: ['electric', 'water'],
     ability: 'levitate',
+    teraType: 'fairy',
+    isTeraActive: false,
     spriteUrl: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/10008.png',
     moves: [
       { id: 'hydro-pump', name: 'Hidrobomba', type: 'water', category: 'special', power: 110 },
@@ -35,6 +39,8 @@ export const INITIAL_SAMPLE_TEAM: TeamMember[] = [
     speciesName: 'Heatran',
     types: ['fire', 'steel'],
     ability: 'flash-fire',
+    teraType: 'grass',
+    isTeraActive: false,
     spriteUrl: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/485.png',
     moves: [
       { id: 'magma-storm', name: 'Lluvia Ígnea', type: 'fire', category: 'special', power: 100 },
@@ -44,23 +50,67 @@ export const INITIAL_SAMPLE_TEAM: TeamMember[] = [
   },
 ];
 
+export const INITIAL_SAMPLE_RIVAL_TEAM: TeamMember[] = [
+  {
+    slot: 1,
+    speciesName: 'gyarados',
+    types: ['water', 'flying'],
+    teraType: 'ground',
+    isTeraActive: false,
+    spriteUrl: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/130.png',
+    moves: [
+      { id: 'waterfall', name: 'Cascada', type: 'water', category: 'physical', power: 80 },
+      { id: 'earthquake', name: 'Terremoto', type: 'ground', category: 'physical', power: 100 },
+    ],
+  },
+  {
+    slot: 2,
+    speciesName: 'Ferrothorn',
+    types: ['grass', 'steel'],
+    teraType: 'water',
+    isTeraActive: false,
+    spriteUrl: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/598.png',
+    moves: [
+      { id: 'power-whip', name: 'Latigazo', type: 'grass', category: 'physical', power: 120 },
+      { id: 'gyro-ball', name: 'Giro Bola', type: 'steel', category: 'physical', power: null },
+    ],
+  },
+];
+
 export function useTeamCoverage(initialTeam?: TeamMember[]) {
   const [team, setTeam] = useState<TeamMember[]>(() => {
     if (initialTeam) return initialTeam;
-    const saved = loadTeamFromStorage();
+    const saved = loadTeamFromStorage(false);
     return saved ?? INITIAL_SAMPLE_TEAM;
   });
 
+  const [rivalTeam, setRivalTeam] = useState<TeamMember[]>(() => {
+    const saved = loadTeamFromStorage(true);
+    return saved ?? INITIAL_SAMPLE_RIVAL_TEAM;
+  });
+
   useEffect(() => {
-    saveTeamToStorage(team);
+    saveTeamToStorage(team, false);
   }, [team]);
+
+  useEffect(() => {
+    saveTeamToStorage(rivalTeam, true);
+  }, [rivalTeam]);
 
   const defensiveSummary = useMemo(() => analyzeTeamDefense(team), [team]);
   const defensiveWarnings = useMemo(() => getDefensiveWarnings(defensiveSummary), [defensiveSummary]);
   const offensiveSummary = useMemo(() => analyzeTeamOffense(team), [team]);
 
-  const updateMember = (updatedMember: TeamMember) => {
-    setTeam((prev) => {
+  const rivalDefensiveSummary = useMemo(() => analyzeTeamDefense(rivalTeam), [rivalTeam]);
+  const rivalDefensiveWarnings = useMemo(
+    () => getDefensiveWarnings(rivalDefensiveSummary),
+    [rivalDefensiveSummary],
+  );
+  const rivalOffensiveSummary = useMemo(() => analyzeTeamOffense(rivalTeam), [rivalTeam]);
+
+  const updateMember = (updatedMember: TeamMember, isRival = false) => {
+    const setter = isRival ? setRivalTeam : setTeam;
+    setter((prev) => {
       const next = prev.some((m) => m.slot === updatedMember.slot)
         ? prev.map((m) => (m.slot === updatedMember.slot ? updatedMember : m))
         : [...prev, updatedMember];
@@ -68,27 +118,48 @@ export function useTeamCoverage(initialTeam?: TeamMember[]) {
     });
   };
 
-  const removeMember = (slot: number) => {
-    setTeam((prev) => prev.filter((m) => m.slot !== slot));
+  const toggleMemberTera = (slot: number, isRival = false) => {
+    const setter = isRival ? setRivalTeam : setTeam;
+    setter((prev) =>
+      prev.map((m) =>
+        m.slot === slot && m.teraType ? { ...m, isTeraActive: !m.isTeraActive } : m,
+      ),
+    );
   };
 
-  const clearTeam = () => {
-    setTeam([]);
+  const removeMember = (slot: number, isRival = false) => {
+    const setter = isRival ? setRivalTeam : setTeam;
+    setter((prev) => prev.filter((m) => m.slot !== slot));
   };
 
-  const resetSampleTeam = () => {
-    setTeam(INITIAL_SAMPLE_TEAM);
+  const clearTeam = (isRival = false) => {
+    const setter = isRival ? setRivalTeam : setTeam;
+    setter([]);
+  };
+
+  const resetSampleTeam = (isRival = false) => {
+    if (isRival) {
+      setRivalTeam(INITIAL_SAMPLE_RIVAL_TEAM);
+    } else {
+      setTeam(INITIAL_SAMPLE_TEAM);
+    }
   };
 
   return {
     team,
     setTeam,
+    rivalTeam,
+    setRivalTeam,
     updateMember,
+    toggleMemberTera,
     removeMember,
     clearTeam,
     resetSampleTeam,
     defensiveSummary,
     defensiveWarnings,
     offensiveSummary,
+    rivalDefensiveSummary,
+    rivalDefensiveWarnings,
+    rivalOffensiveSummary,
   };
 }

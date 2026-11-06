@@ -47,12 +47,14 @@ export interface TeamMember {
   slot: number;
   /** Nombre de la especie (ej. "Garchomp") */
   speciesName: string;
-  /** Uno o dos tipos elementales del Pokémon */
+  /** Uno o dos tipos elementales base del Pokémon */
   types: [PokemonType] | [PokemonType, PokemonType];
   /** Identificador de habilidad (ej. "levitate", "flash-fire") */
   ability?: string;
   /** Teratipo opcional para formatos de 9ª Generación */
   teraType?: PokemonType;
+  /** Indica si la Teracristalización está activa actualmente en el análisis */
+  isTeraActive?: boolean;
   /** URL del icono/sprite oficial del Pokémon */
   spriteUrl?: string | null;
   /** Hasta 4 movimientos asignados (en modo Random puede ser cualquier movimiento del catálogo) */
