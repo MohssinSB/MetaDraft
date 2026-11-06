@@ -89,6 +89,17 @@ export interface TypeDefensiveSummary {
 }
 
 /**
+ * Detalle de un Pokémon y movimiento concreto que cubre súper efectivo a un tipo.
+ */
+export interface OffensiveCoverageContributor {
+  slot: number;
+  speciesName: string;
+  moveName: string;
+  moveType: PokemonType;
+  isStab: boolean;
+}
+
+/**
  * Resumen ofensivo de cómo golpea tu equipo a un tipo defensor concreto.
  */
 export interface TypeOffensiveSummary {
@@ -99,4 +110,6 @@ export interface TypeOffensiveSummary {
   hasStabSuperEffective: boolean;
   /** Número total de ataques del equipo que golpean x2 a este tipo */
   superEffectiveMoveCount: number;
+  /** Lista de Pokémon y movimientos específicos que cubren este tipo */
+  coveredBy: OffensiveCoverageContributor[];
 }

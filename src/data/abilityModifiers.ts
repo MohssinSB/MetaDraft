@@ -5,13 +5,43 @@ export interface AbilityDefensiveModifier {
   nameEs: string;
   /** Multiplicador que aplica al tipo entrante (ej. 0 para inmunidad, 0.5 para resistencia, 2 para debilidad extra) */
   typeMultipliers: Partial<Record<PokemonType, number>>;
+  /**
+   * Anula las debilidades (eficacia > 1 pasa a 1) de un tipo defensor concreto.
+   * Ejemplo: Ráfaga Delta ('delta-stream') atenúa las debilidades del tipo Volador ('flying').
+   */
+  neutralizeWeaknessesOfDefenderType?: PokemonType;
+  /**
+   * Si es true, cualquier ataque con efectividad <= 1 pasa a hacer 0 de daño (ej. Superguarda / Wonder Guard).
+   */
+  onlySuperEffectiveHits?: boolean;
 }
 
 /**
  * Diccionario de habilidades competitivas comunes que alteran las debilidades/inmunidades de un Pokémon.
- * Puedes ampliar esta lista según las reglas de tu torneo.
  */
 export const ABILITY_MODIFIERS: Record<string, AbilityDefensiveModifier> = {
+  'delta-stream': {
+    id: 'delta-stream',
+    nameEs: 'Ráfaga Delta',
+    typeMultipliers: {},
+    neutralizeWeaknessesOfDefenderType: 'flying',
+  },
+  'desolate-land': {
+    id: 'desolate-land',
+    nameEs: 'Tierra del Ocaso',
+    typeMultipliers: { water: 0 },
+  },
+  'primordial-sea': {
+    id: 'primordial-sea',
+    nameEs: 'Mar del Albor',
+    typeMultipliers: { fire: 0 },
+  },
+  'wonder-guard': {
+    id: 'wonder-guard',
+    nameEs: 'Superguarda',
+    typeMultipliers: {},
+    onlySuperEffectiveHits: true,
+  },
   levitate: {
     id: 'levitate',
     nameEs: 'Levitación',

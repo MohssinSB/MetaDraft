@@ -40,15 +40,26 @@ export function getAttackEffectiveness(
   defenderAbility?: string,
 ): EffectivenessMultiplier {
   const uniqueDefenderTypes = Array.from(new Set(defenderTypes));
+  const abilityRule = defenderAbility ? ABILITY_MODIFIERS[defenderAbility] : undefined;
 
   let multiplier = uniqueDefenderTypes.reduce((acc, defType) => {
-    return acc * TYPE_CHART[attackType][defType];
+    let eff = TYPE_CHART[attackType][defType];
+
+    // Regla Ráfaga Delta (Delta Stream): atenúa las debilidades del tipo Volador (pasan de x2 a x1)
+    if (abilityRule?.neutralizeWeaknessesOfDefenderType === defType && eff > 1) {
+      eff = 1;
+    }
+
+    return acc * eff;
   }, 1);
 
-  if (defenderAbility && ABILITY_MODIFIERS[defenderAbility]) {
-    const abilityMod = ABILITY_MODIFIERS[defenderAbility].typeMultipliers[attackType];
+  if (abilityRule) {
+    const abilityMod = abilityRule.typeMultipliers[attackType];
     if (abilityMod !== undefined) {
       multiplier *= abilityMod;
+    }
+    if (abilityRule.onlySuperEffectiveHits && multiplier <= 1) {
+      multiplier = 0;
     }
   }
 
@@ -57,7 +68,8 @@ export function getAttackEffectiveness(
 
 /**
  * Calcula la efectividad de un movimiento concreto frente a un defensor,
- * soportando reglas de movimientos especiales (Liofilización, Plancha Voladora, Mil Flechas).
+ * soportando reglas de movimientos especiales (Liofilización, Plancha Voladora, Mil Flechas)
+ * y habilidades como Ráfaga Delta.
  */
 export function getMoveEffectiveness(
   move: Pick<Move, 'id' | 'type' | 'category'>,
@@ -72,6 +84,7 @@ export function getMoveEffectiveness(
   }
 
   const uniqueDefenderTypes = Array.from(new Set(defenderTypes));
+  const abilityRule = defenderAbility ? ABILITY_MODIFIERS[defenderAbility] : undefined;
 
   // Caso especial: Mil Flechas (Thousand Arrows) golpea neutro (x1) si el defensor es tipo Volador
   if (move.id === 'thousand-arrows' && uniqueDefenderTypes.includes('flying')) {
@@ -80,17 +93,26 @@ export function getMoveEffectiveness(
 
   let multiplier = uniqueDefenderTypes.reduce((acc, defType) => {
     const override = specialRule.overrideTargetEffectiveness?.[defType];
-    const baseEff = override !== undefined ? override : TYPE_CHART[move.type][defType];
-    const secondaryEff = specialRule.secondaryAttackType
+    let baseEff = override !== undefined ? override : TYPE_CHART[move.type][defType];
+    let secondaryEff = specialRule.secondaryAttackType
       ? TYPE_CHART[specialRule.secondaryAttackType][defType]
       : 1;
+
+    if (abilityRule?.neutralizeWeaknessesOfDefenderType === defType) {
+      if (baseEff > 1) baseEff = 1;
+      if (secondaryEff > 1) secondaryEff = 1;
+    }
+
     return acc * baseEff * secondaryEff;
   }, 1);
 
-  if (defenderAbility && ABILITY_MODIFIERS[defenderAbility]) {
-    const abilityMod = ABILITY_MODIFIERS[defenderAbility].typeMultipliers[move.type];
+  if (abilityRule) {
+    const abilityMod = abilityRule.typeMultipliers[move.type];
     if (abilityMod !== undefined) {
       multiplier *= abilityMod;
+    }
+    if (abilityRule.onlySuperEffectiveHits && multiplier <= 1) {
+      multiplier = 0;
     }
   }
 

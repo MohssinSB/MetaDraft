@@ -115,7 +115,7 @@ export function App() {
               onResetSampleTeam={() => resetSampleTeam(isRivalMode)}
               onOpenShowdown={() => setShowShowdownModal(true)}
             />
-            <OffensiveCoverage summaries={currentOffensiveSummary} />
+            <OffensiveCoverage team={currentTeam} summaries={currentOffensiveSummary} />
             <DefensiveMatrix team={currentTeam} summaries={currentDefensiveSummary} />
           </>
         )}

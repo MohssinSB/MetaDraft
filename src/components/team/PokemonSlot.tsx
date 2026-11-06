@@ -1,4 +1,5 @@
 import { getEffectiveDefensiveTypes, hasMoveStab } from '@/core/effectiveness';
+import { getMemberCoveredTypes } from '@/core/offensiveAnalyzer';
 import { ABILITY_MODIFIERS } from '@/data/abilityModifiers';
 import { SPECIAL_MOVES } from '@/data/specialMoves';
 import { TYPE_METADATA } from '@/data/typeChart';
@@ -43,6 +44,7 @@ export function PokemonSlot({
     : 'Estándar';
 
   const effectiveTypes = getEffectiveDefensiveTypes(member);
+  const coveredTypes = getMemberCoveredTypes(member);
 
   return (
     <div
@@ -129,6 +131,7 @@ export function PokemonSlot({
         </div>
       </div>
 
+      {/* Movimientos */}
       <div className="mt-4 border-t border-slate-800 pt-3">
         <div className="mb-1.5 flex items-center justify-between">
           <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">
@@ -184,6 +187,29 @@ export function PokemonSlot({
               );
             })}
           </ul>
+        )}
+      </div>
+
+      {/* Cobertura individual de este Pokémon */}
+      <div className="mt-3 border-t border-slate-800/80 pt-2.5">
+        <div className="mb-1.5 flex items-center justify-between">
+          <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+            Cubre (2x)
+          </span>
+          <span className="text-[11px] font-bold text-emerald-400">
+            {coveredTypes.length} / 18 tipos
+          </span>
+        </div>
+        {coveredTypes.length === 0 ? (
+          <p className="text-[11px] italic text-slate-500">
+            Ningún tipo cubierto en súper efectivo
+          </p>
+        ) : (
+          <div className="flex flex-wrap gap-1">
+            {coveredTypes.map((t) => (
+              <TypeBadge key={t} type={t} size="sm" />
+            ))}
+          </div>
         )}
       </div>
     </div>

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { getAttackEffectiveness } from '@/core/effectiveness';
-import { analyzeTeamOffense } from '@/core/offensiveAnalyzer';
+import { analyzeTeamOffense, getMemberCoveredTypes } from '@/core/offensiveAnalyzer';
 import type { TeamMember } from '@/types/pokemon';
 
 describe('Motor de Efectividad de Tipos (effectiveness.ts)', () => {
@@ -31,6 +31,15 @@ describe('Motor de Efectividad de Tipos (effectiveness.ts)', () => {
   it('aplica reducción por habilidad Sebo / Thick Fat (Hielo vs Planta/Veneno con thick-fat = x1)', () => {
     expect(getAttackEffectiveness('ice', ['grass', 'poison'], 'thick-fat')).toBe(1);
   });
+
+  it('aplica Ráfaga Delta / Delta Stream atenuando las debilidades del tipo Volador (Rayquaza Dragón/Volador)', () => {
+    // Hielo pasa de x4 a x2 (solo golpea x2 por Dragón, x1 por Volador)
+    expect(getAttackEffectiveness('ice', ['dragon', 'flying'], 'delta-stream')).toBe(2);
+    // Roca pasa de x2 a x1
+    expect(getAttackEffectiveness('rock', ['dragon', 'flying'], 'delta-stream')).toBe(1);
+    // Eléctrico pasa de x1 a x0.5 (resistido por Dragón, neutro contra Volador)
+    expect(getAttackEffectiveness('electric', ['dragon', 'flying'], 'delta-stream')).toBe(0.5);
+  });
 });
 
 describe('Analizador de Cobertura Ofensiva (offensiveAnalyzer.ts)', () => {
@@ -58,5 +67,22 @@ describe('Analizador de Cobertura Ofensiva (offensiveAnalyzer.ts)', () => {
     const report = analyzeTeamOffense(sampleTeam);
     const grassSummary = report.find((r) => r.targetType === 'grass');
     expect(grassSummary?.isCoveredSuperEffective).toBe(false);
+  });
+
+  it('devuelve los tipos cubiertos individualmente por un Pokémon y detalla coveredBy', () => {
+    const covered = getMemberCoveredTypes(sampleTeam[0]);
+    expect(covered).toEqual(['fire', 'electric', 'poison', 'rock', 'steel']);
+
+    const report = analyzeTeamOffense(sampleTeam);
+    const steelSummary = report.find((r) => r.targetType === 'steel');
+    expect(steelSummary?.coveredBy).toEqual([
+      {
+        slot: 1,
+        speciesName: 'Garchomp',
+        moveName: 'Terremoto',
+        moveType: 'ground',
+        isStab: true,
+      },
+    ]);
   });
 });
