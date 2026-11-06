@@ -43,7 +43,7 @@ export interface Move {
 }
 
 export interface TeamMember {
-  /** Posición en el equipo (1 a 6) */
+  /** Posición en el equipo (1 a 8) */
   slot: number;
   /** Nombre de la especie (ej. "Garchomp") */
   speciesName: string;
@@ -55,6 +55,8 @@ export interface TeamMember {
   teraType?: PokemonType;
   /** Indica si la Teracristalización está activa actualmente en el análisis */
   isTeraActive?: boolean;
+  /** Indica si el Pokémon ha sido baneado en la ronda actual (se mantiene en el slot pero no cuenta en tablas) */
+  isBanned?: boolean;
   /** URL del icono/sprite oficial del Pokémon */
   spriteUrl?: string | null;
   /** Hasta 4 movimientos asignados (en modo Random puede ser cualquier movimiento del catálogo) */

@@ -14,11 +14,16 @@ type ActiveView = 'my-team' | 'rival-team' | 'matchup';
 export function App() {
   const {
     team,
+    activeTeam,
     setTeam,
     rivalTeam,
+    activeRivalTeam,
     setRivalTeam,
+    maxSlots,
+    toggleExtendedRoster,
     updateMember,
     toggleMemberTera,
+    toggleMemberBan,
     removeMember,
     clearTeam,
     resetSampleTeam,
@@ -36,6 +41,7 @@ export function App() {
 
   const isRivalMode = activeView === 'rival-team';
   const currentTeam = isRivalMode ? rivalTeam : team;
+  const currentActiveTeam = isRivalMode ? activeRivalTeam : activeTeam;
   const currentDefensiveSummary = isRivalMode ? rivalDefensiveSummary : defensiveSummary;
   const currentDefensiveWarnings = isRivalMode ? rivalDefensiveWarnings : defensiveWarnings;
   const currentOffensiveSummary = isRivalMode ? rivalOffensiveSummary : offensiveSummary;
@@ -57,7 +63,7 @@ export function App() {
               MetaDraft
             </h1>
             <p className="text-xs text-slate-400">
-              Analizador de Cobertura y Enfrentamientos para Torneos de Pokémon (Modo Random)
+              Analizador de Cobertura y Enfrentamientos para Torneos de Pokémon (Modo Random & Baneos)
             </p>
           </div>
 
@@ -71,7 +77,7 @@ export function App() {
                   : 'text-slate-400 hover:text-white'
               }`}
             >
-              Mi Equipo ({team.length})
+              Mi Equipo ({activeTeam.length}/{maxSlots})
             </button>
             <button
               type="button"
@@ -82,7 +88,7 @@ export function App() {
                   : 'text-slate-400 hover:text-white'
               }`}
             >
-              Equipo Rival ({rivalTeam.length})
+              Equipo Rival ({activeRivalTeam.length}/{maxSlots})
             </button>
             <button
               type="button"
@@ -101,22 +107,25 @@ export function App() {
 
       <main className="mx-auto max-w-7xl space-y-6 px-4 py-6 sm:px-6">
         {activeView === 'matchup' ? (
-          <MatchupAnalyzer myTeam={team} rivalTeam={rivalTeam} />
+          <MatchupAnalyzer myTeam={activeTeam} rivalTeam={activeRivalTeam} />
         ) : (
           <>
             <TeamWarnings warnings={currentDefensiveWarnings} />
             <TeamGrid
               title={isRivalMode ? 'Equipo Rival' : 'Tu Equipo'}
               team={currentTeam}
+              maxSlots={maxSlots}
+              onToggleMaxSlots={toggleExtendedRoster}
               onEditSlot={(slot) => setEditingSlot(slot)}
               onToggleTera={(slot) => toggleMemberTera(slot, isRivalMode)}
+              onToggleBan={(slot) => toggleMemberBan(slot, isRivalMode)}
               onRemoveMember={(slot) => removeMember(slot, isRivalMode)}
               onClearTeam={() => clearTeam(isRivalMode)}
               onResetSampleTeam={() => resetSampleTeam(isRivalMode)}
               onOpenShowdown={() => setShowShowdownModal(true)}
             />
-            <OffensiveCoverage team={currentTeam} summaries={currentOffensiveSummary} />
-            <DefensiveMatrix team={currentTeam} summaries={currentDefensiveSummary} />
+            <OffensiveCoverage team={currentActiveTeam} summaries={currentOffensiveSummary} />
+            <DefensiveMatrix team={currentActiveTeam} summaries={currentDefensiveSummary} />
           </>
         )}
       </main>

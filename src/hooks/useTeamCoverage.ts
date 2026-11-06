@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
 import { analyzeTeamDefense, getDefensiveWarnings } from '@/core/defensiveAnalyzer';
 import { analyzeTeamOffense } from '@/core/offensiveAnalyzer';
-import { loadTeamFromStorage, saveTeamToStorage } from '@/services/storage';
+import { getCachedItem, loadTeamFromStorage, saveTeamToStorage, setCachedItem } from '@/services/storage';
 import type { TeamMember } from '@/types/pokemon';
+
+const EXTENDED_ROSTER_KEY = 'extended_roster_8_slots';
 
 /**
  * Equipo de ejemplo inicial para visualizar cómo funciona la herramienta desde el primer arranque.
@@ -53,7 +55,7 @@ export const INITIAL_SAMPLE_TEAM: TeamMember[] = [
 export const INITIAL_SAMPLE_RIVAL_TEAM: TeamMember[] = [
   {
     slot: 1,
-    speciesName: 'gyarados',
+    speciesName: 'Gyarados',
     types: ['water', 'flying'],
     teraType: 'ground',
     isTeraActive: false,
@@ -89,6 +91,11 @@ export function useTeamCoverage(initialTeam?: TeamMember[]) {
     return saved ?? INITIAL_SAMPLE_RIVAL_TEAM;
   });
 
+  const [isExtendedRoster, setIsExtendedRoster] = useState<boolean>(() => {
+    const saved = getCachedItem<boolean>(EXTENDED_ROSTER_KEY);
+    return saved ?? false;
+  });
+
   useEffect(() => {
     saveTeamToStorage(team, false);
   }, [team]);
@@ -97,16 +104,33 @@ export function useTeamCoverage(initialTeam?: TeamMember[]) {
     saveTeamToStorage(rivalTeam, true);
   }, [rivalTeam]);
 
-  const defensiveSummary = useMemo(() => analyzeTeamDefense(team), [team]);
-  const defensiveWarnings = useMemo(() => getDefensiveWarnings(defensiveSummary), [defensiveSummary]);
-  const offensiveSummary = useMemo(() => analyzeTeamOffense(team), [team]);
+  useEffect(() => {
+    setCachedItem(EXTENDED_ROSTER_KEY, isExtendedRoster);
+  }, [isExtendedRoster]);
 
-  const rivalDefensiveSummary = useMemo(() => analyzeTeamDefense(rivalTeam), [rivalTeam]);
+  const maxSlots: 6 | 8 = isExtendedRoster ? 8 : 6;
+
+  // Filtramos los Pokémon activos (dentro del límite de slots actual y que NO estén marcados como baneados)
+  const activeTeam = useMemo(
+    () => team.filter((m) => m.slot <= maxSlots && !m.isBanned),
+    [team, maxSlots],
+  );
+
+  const activeRivalTeam = useMemo(
+    () => rivalTeam.filter((m) => m.slot <= maxSlots && !m.isBanned),
+    [rivalTeam, maxSlots],
+  );
+
+  const defensiveSummary = useMemo(() => analyzeTeamDefense(activeTeam), [activeTeam]);
+  const defensiveWarnings = useMemo(() => getDefensiveWarnings(defensiveSummary), [defensiveSummary]);
+  const offensiveSummary = useMemo(() => analyzeTeamOffense(activeTeam), [activeTeam]);
+
+  const rivalDefensiveSummary = useMemo(() => analyzeTeamDefense(activeRivalTeam), [activeRivalTeam]);
   const rivalDefensiveWarnings = useMemo(
     () => getDefensiveWarnings(rivalDefensiveSummary),
     [rivalDefensiveSummary],
   );
-  const rivalOffensiveSummary = useMemo(() => analyzeTeamOffense(rivalTeam), [rivalTeam]);
+  const rivalOffensiveSummary = useMemo(() => analyzeTeamOffense(activeRivalTeam), [activeRivalTeam]);
 
   const updateMember = (updatedMember: TeamMember, isRival = false) => {
     const setter = isRival ? setRivalTeam : setTeam;
@@ -125,6 +149,17 @@ export function useTeamCoverage(initialTeam?: TeamMember[]) {
         m.slot === slot && m.teraType ? { ...m, isTeraActive: !m.isTeraActive } : m,
       ),
     );
+  };
+
+  const toggleMemberBan = (slot: number, isRival = false) => {
+    const setter = isRival ? setRivalTeam : setTeam;
+    setter((prev) =>
+      prev.map((m) => (m.slot === slot ? { ...m, isBanned: !m.isBanned } : m)),
+    );
+  };
+
+  const toggleExtendedRoster = () => {
+    setIsExtendedRoster((prev) => !prev);
   };
 
   const removeMember = (slot: number, isRival = false) => {
@@ -147,11 +182,17 @@ export function useTeamCoverage(initialTeam?: TeamMember[]) {
 
   return {
     team,
+    activeTeam,
     setTeam,
     rivalTeam,
+    activeRivalTeam,
     setRivalTeam,
+    maxSlots,
+    isExtendedRoster,
+    toggleExtendedRoster,
     updateMember,
     toggleMemberTera,
+    toggleMemberBan,
     removeMember,
     clearTeam,
     resetSampleTeam,

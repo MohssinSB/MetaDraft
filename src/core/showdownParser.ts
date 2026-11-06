@@ -55,7 +55,7 @@ export function parseShowdownTeam(rawPaste: string): ParsedShowdownSet[] {
   const blocks = trimmed.split(/\r?\n\s*\r?\n/).filter((b) => b.trim().length > 0);
   const parsedSets: ParsedShowdownSet[] = [];
 
-  for (const block of blocks.slice(0, 6)) {
+  for (const block of blocks.slice(0, 8)) {
     const lines = block
       .split(/\r?\n/)
       .map((l) => l.trim())

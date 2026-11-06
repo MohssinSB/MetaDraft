@@ -11,6 +11,7 @@ interface PokemonSlotProps {
   member?: TeamMember;
   onEdit: (slot: number) => void;
   onToggleTera?: (slot: number) => void;
+  onToggleBan?: (slot: number) => void;
   onRemove?: (slot: number) => void;
 }
 
@@ -19,6 +20,7 @@ export function PokemonSlot({
   member,
   onEdit,
   onToggleTera,
+  onToggleBan,
   onRemove,
 }: PokemonSlotProps) {
   if (!member) {
@@ -45,13 +47,16 @@ export function PokemonSlot({
 
   const effectiveTypes = getEffectiveDefensiveTypes(member);
   const coveredTypes = getMemberCoveredTypes(member);
+  const isBanned = Boolean(member.isBanned);
 
   return (
     <div
       className={`flex flex-col justify-between rounded-xl border p-4 shadow-md transition ${
-        member.isTeraActive
-          ? 'border-fuchsia-500/70 bg-slate-900 ring-1 ring-fuchsia-500/30'
-          : 'border-slate-800 bg-slate-900 hover:border-slate-700'
+        isBanned
+          ? 'border-rose-900/60 bg-slate-950/70 opacity-60'
+          : member.isTeraActive
+            ? 'border-fuchsia-500/70 bg-slate-900 ring-1 ring-fuchsia-500/30'
+            : 'border-slate-800 bg-slate-900 hover:border-slate-700'
       }`}
     >
       <div>
@@ -61,7 +66,9 @@ export function PokemonSlot({
               <img
                 src={member.spriteUrl}
                 alt={member.speciesName}
-                className="h-14 w-14 shrink-0 rounded-lg bg-slate-950/60 p-1 object-contain"
+                className={`h-14 w-14 shrink-0 rounded-lg bg-slate-950/60 p-1 object-contain ${
+                  isBanned ? 'grayscale' : ''
+                }`}
               />
             ) : (
               <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-lg bg-slate-950/60 text-xs font-bold text-slate-600">
@@ -69,13 +76,22 @@ export function PokemonSlot({
               </div>
             )}
             <div>
-              <span className="text-[11px] font-medium text-slate-400">Slot #{slot}</span>
-              <h3 className="text-base font-bold text-white">{member.speciesName}</h3>
+              <div className="flex items-center gap-1.5">
+                <span className="text-[11px] font-medium text-slate-400">Slot #{slot}</span>
+                {isBanned && (
+                  <span className="rounded bg-rose-950 px-1.5 py-0.5 text-[10px] font-bold text-rose-300">
+                    🚫 BANEADO
+                  </span>
+                )}
+              </div>
+              <h3 className={`text-base font-bold ${isBanned ? 'line-through text-slate-400' : 'text-white'}`}>
+                {member.speciesName}
+              </h3>
               <div className="mt-1 flex flex-wrap items-center gap-1">
                 {effectiveTypes.map((t) => (
                   <TypeBadge key={t} type={t} size="sm" />
                 ))}
-                {member.isTeraActive && (
+                {member.isTeraActive && !isBanned && (
                   <span className="rounded bg-fuchsia-950 px-1.5 py-0.5 text-[10px] font-bold text-fuchsia-300">
                     TERA
                   </span>
@@ -85,6 +101,24 @@ export function PokemonSlot({
           </div>
 
           <div className="flex items-center gap-1">
+            {onToggleBan && (
+              <button
+                type="button"
+                onClick={() => onToggleBan(slot)}
+                className={`rounded px-2 py-1 text-xs font-semibold transition ${
+                  isBanned
+                    ? 'bg-emerald-950 text-emerald-300 hover:bg-emerald-900'
+                    : 'text-amber-400 hover:bg-slate-800 hover:text-amber-300'
+                }`}
+                title={
+                  isBanned
+                    ? 'Reactivar Pokémon para que vuelva a contar en las tablas'
+                    : 'Marcar como Baneado (se excluye de las tablas sin borrarlo)'
+                }
+              >
+                {isBanned ? 'Reactivar' : 'Banear'}
+              </button>
+            )}
             <button
               type="button"
               onClick={() => onEdit(slot)}
@@ -114,7 +148,7 @@ export function PokemonSlot({
             </span>
           </p>
 
-          {member.teraType && onToggleTera && (
+          {member.teraType && onToggleTera && !isBanned && (
             <button
               type="button"
               onClick={() => onToggleTera(slot)}
