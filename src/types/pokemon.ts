@@ -53,8 +53,20 @@ export interface TeamMember {
   ability?: string;
   /** Teratipo opcional para formatos de 9ª Generación */
   teraType?: PokemonType;
-  /** Hasta 4 movimientos asignados */
+  /** URL del icono/sprite oficial del Pokémon */
+  spriteUrl?: string | null;
+  /** Hasta 4 movimientos asignados (en modo Random puede ser cualquier movimiento del catálogo) */
   moves: Move[];
+}
+
+/**
+ * Entrada ligera para autocompletar Pokémon o Movimientos sin descargar todos sus detalles.
+ */
+export interface CatalogEntry {
+  /** Identificador interno de PokéAPI (ej. "rotom-wash" o "thunder-wave") */
+  id: string;
+  /** Nombre legible formateado (ej. "Rotom Wash" o "Thunder Wave") */
+  displayName: string;
 }
 
 /**
